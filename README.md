@@ -5,15 +5,11 @@ Constant Contact .NET SDK
 
 In order to use the Constant Contact SDK you have to follow these steps:
 
-1) Add the CTCT.dll library to your references project.
+1) Download and build the project so that CTCT.dll is generated. Add the CTCT.dll library to your references project.
 
 2) Place your credentials in app.config file under the appSettings tag.
 
 `<add key="APIKey" value="APIkey"/>`
-<br>
-`<add key="Password" value="password"/>`
-<br>
-`<add key="Username" value="username"/>`
 <br>
 `<add key="RedirectURL" value="RedirectURL"/>`
 
@@ -23,21 +19,55 @@ In order to use the Constant Contact SDK you have to follow these steps:
 
  `using CTCT; `
 <br>
- `using CTCT.Util;` 
+ `using CTCT.Components;` 
 <br>
 `using CTCT.Components.Contacts;`
 <br>
-`using CTCT.Auth;`
+`using CTCT.Components.EmailCampaigns;`
 <br>
-`using CTCT.Services;`  
+`using CTCT.Exceptions;;`  
 
-2) Create a ConstantContact object
+2) Get the access token
 
-`ConstantContact constantContact = new ConstantContact(); `                                                                                     
+2.1) For windows forms
+
+`_accessToken = OAuth.AuthenticateFromWinProgram(ref state); ` 
+
+2.2) For web forms (this is just an example, the login actions is done at a button click)
+
+`protected void Page_Load(object sender, EventArgs e)`
+<br>
+`{`
+<br>
+`   var code = HttpContext.Current.Request.QueryString["code"];`
+<br>
+`   if (!string.IsNullOrWhiteSpace(code))`
+<br>
+`   {`
+<br>
+`       _accessToken = OAuth.GetAccessTokenByCodeForWebApplication(HttpContext.Current, code);`
+<br>
+`   }`
+<br>
+`}`
+<br>
+<br>
+`protected void ButtonLogin_Click(object sender, EventArgs e)`
+<br>
+`{`
+<br>
+`   OAuth.AuthorizeFromWebApplication(HttpContext.Current, "ok");`
+<br>
+`}`
+
+
+
+3) Create a ConstantContact object
+
+`ConstantContact constantContact = new ConstantContact(_apiKey, _accessToken); `                                                                                     
                   
-3) Use the functions of the SDK using the created object.   
+4) Use the functions of the SDK using the created object.   
              
 ######Example for getting an contact
 
 `Contact contact = constantContact.GetContact(int contactId);`                                                      
-

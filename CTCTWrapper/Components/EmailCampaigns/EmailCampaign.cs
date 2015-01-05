@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Runtime.Serialization;
-using System.Web.Script.Serialization;
 using CTCT.Components.Tracking;
 using CTCT.Components.Contacts;
 using CTCT.Util;
@@ -108,8 +105,8 @@ namespace CTCT.Components.EmailCampaigns
         /// </summary>
         public DateTime? NextRunDateDate
         {
-            get { return this.NextRunDateString.FromISO8601String(); }
-            set { this.NextRunDateString = value.ToISO8601String(); }
+            get { return NextRunDateString.FromISO8601String(); }
+            set { NextRunDateString = value.ToISO8601String(); }
         }
         /// <summary>
         /// Campaign status, string representation.
@@ -142,12 +139,12 @@ namespace CTCT.Components.EmailCampaigns
         /// <summary>
         /// Gets or sets the view page link.
         /// </summary>
-        [DataMember(Name = "view_as_web_page_link", EmitDefaultValue = false)]
-        public string ViewAsWebPageLink { get; set; }
+        [DataMember(Name = "view_as_web_page_link_text", EmitDefaultValue = false)]
+        public string ViewAsWebPageLinkText { get; set; }
         /// <summary>
         /// Gets or sets the greeting.
         /// </summary>
-        [DataMember(Name = "greetings_salutations", EmitDefaultValue = false)]
+        [DataMember(Name = "greeting_salutations", EmitDefaultValue = false)]
         public string GreetingSalutations { get; set; }
         /// <summary>
         /// Greeting name, string representation.
@@ -162,6 +159,11 @@ namespace CTCT.Components.EmailCampaigns
             get { return this.GreetingNameString.ToEnum<GreetingName>(); }
             set { this.GreetingNameString = value.ToString(); }
         }
+        /// <summary>
+        /// Gets or sets o non-expiring link to use for sharing a sent email campaign using social channels
+        /// </summary>
+        [DataMember(Name = "permalink_url", EmitDefaultValue = false)]
+        public string PermanentLink { get; set; }
         /// <summary>
         /// Gets or sets the greeting string.
         /// </summary>
@@ -200,6 +202,11 @@ namespace CTCT.Components.EmailCampaigns
         /// </summary>
         [DataMember(Name = "tracking_summary", EmitDefaultValue = false)]
         public TrackingSummary TrackingSummary { get; set; }
+        /// <summary>
+        /// Click through details for each link in this email campaign.
+        /// </summary>
+        [DataMember(Name = "click_through_details", EmitDefaultValue=false)]
+        public IList<ClickThroughDetails> ClickThroughDetails { get; set; }
         /// <summary>
         /// Gets or sets the message footer.
         /// </summary>

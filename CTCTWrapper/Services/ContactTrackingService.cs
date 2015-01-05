@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using CTCT.Components;
 using CTCT.Components.Tracking;
 using CTCT.Util;
@@ -14,6 +11,75 @@ namespace CTCT.Services
     /// </summary>
     public class ContactTrackingService : BaseService, IContactTrackingService
     {
+		/// <summary>
+		/// Get all activities for a given contact.
+		/// </summary>
+		/// <param name="accessToken">Constant Contact OAuth2 access token.</param>
+        /// <param name="apiKey">The API key for the application</param>
+        /// <param name="contactId">Contact id.</param>
+		/// <param name="limit">Specifies the number of results per page in the output, from 1 - 500, default = 500.</param>
+		/// <param name="createdSince">Filter for activities created since the supplied date in the collection</param>
+		/// <returns>ResultSet containing a results array of @link ContactActivity</returns>
+		public ResultSet<ContactActivity> GetActivities(string accessToken, string apiKey, string contactId, int? limit, DateTime? createdSince)
+		{
+			return GetActivities(accessToken, apiKey, contactId, limit, createdSince, null);
+		}
+
+		/// <summary>
+		/// Get all activities for a given contact.
+		/// </summary>
+		/// <param name="accessToken">Constant Contact OAuth2 access token.</param>
+        /// <param name="apiKey">The API key for the application</param>
+        /// <param name="contactId">Contact id.</param>
+		/// <param name="limit">Specifies the number of results per page in the output, from 1 - 500, default = 500.</param>
+		/// <param name="createdSince">Filter for activities created since the supplied date in the collection</param>	 
+		/// <param name="pag">Pagination object.</param>
+		/// <returns>ResultSet containing a results array of @link ContactActivity</returns>
+		public ResultSet<ContactActivity> GetActivities(string accessToken, string apiKey, string contactId, int? limit, DateTime? createdSince, Pagination pag)
+		{
+			ResultSet<ContactActivity> results = null;
+            string url = (pag == null) ? Config.ConstructUrl(Config.Endpoints.ContactTrackingActivities, new object[] { contactId }, new object[] { "limit", limit, "created_since", Extensions.ToISO8601String(createdSince) }) : pag.GetNextUrl();
+            CUrlResponse response = RestClient.Get(url, accessToken, apiKey);
+
+            if (response.IsError)
+            {
+                throw new CtctException(response.GetErrorMessage());
+            }
+
+            if (response.HasData)
+            {
+                results = Component.FromJSON<ResultSet<ContactActivity>>(response.Body);
+            }
+
+            return results;
+		}
+
+		/// <summary>
+        /// Get activities by email campaign for a given contact.
+        /// </summary>
+        /// <param name="accessToken">Constant Contact OAuth2 access token.</param>
+        /// <param name="apiKey">The API key for the application</param>
+        /// <param name="contactId">Contact id.</param>
+        /// <returns>ResultSet containing a results array of @link TrackingSummary</returns>
+        public ResultSet<TrackingSummary> GetEmailCampaignActivities(string accessToken, string apiKey, string contactId)
+        {
+            ResultSet<TrackingSummary> results = null;
+            string url = Config.ConstructUrl(Config.Endpoints.ContactTrackingEmailCampaignActivities, new object[] { contactId }, null);
+            CUrlResponse response = RestClient.Get(url, accessToken, apiKey);
+
+            if (response.IsError)
+            {
+                throw new CtctException(response.GetErrorMessage());
+            }
+
+            if (response.HasData)
+            {
+                results = Component.FromJSON<ResultSet<TrackingSummary>>(response.Body);
+            }
+
+            return results;
+        }
+
         /// <summary>
         /// Get bounces for a given contact.
         /// </summary>
@@ -74,10 +140,11 @@ namespace CTCT.Services
         /// <param name="apiKey">The API key for the application</param>
         /// <param name="contactId">Contact id.</param>
         /// <param name="limit">Specifies the number of results per page in the output, from 1 - 500, default = 500.</param>
+        /// <param name="createdSince">filter for activities created since the supplied date in the collection</param>
         /// <returns>ResultSet containing a results array of @link ClickActivity</returns>
-        public ResultSet<ClickActivity> GetClicks(string accessToken, string apiKey, string contactId, int? limit)
+        public ResultSet<ClickActivity> GetClicks(string accessToken, string apiKey, string contactId, int? limit, DateTime? createdSince)
         {
-            return GetClicks(accessToken, apiKey, contactId, limit, null);
+            return GetClicks(accessToken, apiKey, contactId, limit, createdSince, null);
         }
 
         /// <summary>
@@ -85,11 +152,12 @@ namespace CTCT.Services
         /// </summary>
         /// <param name="accessToken">Constant Contact OAuth2 access token.</param>
         /// <param name="apiKey">The API key for the application</param>
+        /// <param name="createdSince">filter for activities created since the supplied date in the collection</param>
         /// <param name="pag">Pagination object.</param>
         /// <returns>ResultSet containing a results array of @link ClickActivity</returns>
-        public ResultSet<ClickActivity> GetClicks(string accessToken, string apiKey, Pagination pag)
+        public ResultSet<ClickActivity> GetClicks(string accessToken, string apiKey, DateTime? createdSince, Pagination pag)
         {
-            return GetClicks(accessToken, apiKey, null, null, pag);
+            return GetClicks(accessToken, apiKey, null, null, createdSince, pag);
         }
 
         /// <summary>
@@ -99,12 +167,13 @@ namespace CTCT.Services
         /// <param name="apiKey">The API key for the application</param>
         /// <param name="contactId">Contact id.</param>
         /// <param name="limit">Specifies the number of results per page in the output, from 1 - 500, default = 500.</param>
+        /// <param name="createdSince">filter for activities created since the supplied date in the collection</param>
         /// <param name="pag">Pagination object.</param>
         /// <returns>ResultSet containing a results array of @link ClickActivity</returns>
-        private ResultSet<ClickActivity> GetClicks(string accessToken, string apiKey, string contactId, int? limit, Pagination pag)
+        private ResultSet<ClickActivity> GetClicks(string accessToken, string apiKey, string contactId, int? limit, DateTime? createdSince, Pagination pag)
         {
             ResultSet<ClickActivity> results = null;
-            string url = (pag == null) ? Config.ConstructUrl(Config.Endpoints.ContactTrackingClicks, new object[] { contactId }, new object[] { "limit", limit }) : pag.GetNextUrl();
+            string url = (pag == null) ? Config.ConstructUrl(Config.Endpoints.ContactTrackingClicks, new object[] { contactId }, new object[] { "limit", limit, "created_since", Extensions.ToISO8601String(createdSince) }) : pag.GetNextUrl();
             CUrlResponse response = RestClient.Get(url, accessToken, apiKey);
 
             if (response.IsError)
@@ -127,10 +196,11 @@ namespace CTCT.Services
         /// <param name="apiKey">The API key for the application</param>
         /// <param name="contactId">Contact id.</param>
         /// <param name="limit">Specifies the number of results per page in the output, from 1 - 500, default = 500.</param>
+        /// <param name="createdSince">filter for activities created since the supplied date in the collection</param>
         /// <returns>ResultSet containing a results array of @link ForwardActivity.</returns>
-        public ResultSet<ForwardActivity> GetForwards(string accessToken, string apiKey, string contactId, int? limit)
+        public ResultSet<ForwardActivity> GetForwards(string accessToken, string apiKey, string contactId, int? limit, DateTime? createdSince)
         {
-            return GetForwards(accessToken, apiKey, contactId, limit, null);
+            return GetForwards(accessToken, apiKey, contactId, limit, createdSince, null);
         }
 
         /// <summary>
@@ -138,11 +208,12 @@ namespace CTCT.Services
         /// </summary>
         /// <param name="accessToken">Constant Contact OAuth2 access token.</param>
         /// <param name="apiKey">The API key for the application</param>
+        /// <param name="createdSince">filter for activities created since the supplied date in the collection</param>
         /// <param name="pag">Pagination object.</param>
         /// <returns>ResultSet containing a results array of @link ForwardActivity.</returns>
-        public ResultSet<ForwardActivity> GetForwards(string accessToken, string apiKey, Pagination pag)
+        public ResultSet<ForwardActivity> GetForwards(string accessToken, string apiKey, DateTime? createdSince, Pagination pag)
         {
-            return GetForwards(accessToken, apiKey, null, null, pag);
+            return GetForwards(accessToken, apiKey, null, null, createdSince, pag);
         }
 
         /// <summary>
@@ -152,12 +223,13 @@ namespace CTCT.Services
         /// <param name="apiKey">The API key for the application</param>
         /// <param name="contactId">Contact id.</param>
         /// <param name="limit">Specifies the number of results per page in the output, from 1 - 500, default = 500.</param>
+        /// <param name="createdSince">filter for activities created since the supplied date in the collection</param>
         /// <param name="pag">Pagination object.</param>
         /// <returns>ResultSet containing a results array of @link ForwardActivity.</returns>
-        private ResultSet<ForwardActivity> GetForwards(string accessToken, string apiKey, string contactId, int? limit, Pagination pag)
+        private ResultSet<ForwardActivity> GetForwards(string accessToken, string apiKey, string contactId, int? limit, DateTime? createdSince, Pagination pag)
         {
             ResultSet<ForwardActivity> results = null;
-            string url = (pag == null) ? Config.ConstructUrl(Config.Endpoints.ContactTrackingForwards, new object[] { contactId }, new object[] { "limit", limit }) : pag.GetNextUrl();
+            string url = (pag == null) ? Config.ConstructUrl(Config.Endpoints.ContactTrackingForwards, new object[] { contactId }, new object[] { "limit", limit, "created_since", Extensions.ToISO8601String(createdSince) }) : pag.GetNextUrl();
             CUrlResponse response = RestClient.Get(url, accessToken, apiKey);
 
             if (response.IsError)
@@ -180,10 +252,11 @@ namespace CTCT.Services
         /// <param name="apiKey">The API key for the application</param>
         /// <param name="contactId">Contact id.</param>
         /// <param name="limit">Specifies the number of results per page in the output, from 1 - 500, default = 500.</param>
+        /// <param name="createdSince">filter for activities created since the supplied date in the collection</param>
         /// <returns>ResultSet containing a results array of @link OpenActivity.</returns>
-        public ResultSet<OpenActivity> GetOpens(string accessToken, string apiKey, string contactId, int? limit)
+        public ResultSet<OpenActivity> GetOpens(string accessToken, string apiKey, string contactId, int? limit, DateTime? createdSince)
         {
-            return GetOpens(accessToken, apiKey, contactId, limit, null);
+            return GetOpens(accessToken, apiKey, contactId, limit, createdSince, null);
         }
 
         /// <summary>
@@ -191,11 +264,12 @@ namespace CTCT.Services
         /// </summary>
         /// <param name="accessToken">Constant Contact OAuth2 access token.</param>
         /// <param name="apiKey">The API key for the application</param>
+        /// <param name="createdSince">filter for activities created since the supplied date in the collection</param>
         /// <param name="pag">Pagination object.</param>
         /// <returns>ResultSet containing a results array of @link OpenActivity.</returns>
-        public ResultSet<OpenActivity> GetOpens(string accessToken, string apiKey, Pagination pag)
+        public ResultSet<OpenActivity> GetOpens(string accessToken, string apiKey, DateTime? createdSince, Pagination pag)
         {
-            return GetOpens(accessToken, apiKey, null, null, pag);
+            return GetOpens(accessToken, apiKey, null, null, createdSince, pag);
         }
 
         /// <summary>
@@ -205,12 +279,13 @@ namespace CTCT.Services
         /// <param name="apiKey">The API key for the application</param>
         /// <param name="contactId">Contact id.</param>
         /// <param name="limit">Specifies the number of results per page in the output, from 1 - 500, default = 500.</param>
+        /// <param name="createdSince">filter for activities created since the supplied date in the collection</param>
         /// <param name="pag">Pagination object.</param>
         /// <returns>ResultSet containing a results array of @link OpenActivity.</returns>
-        private ResultSet<OpenActivity> GetOpens(string accessToken, string apiKey, string contactId, int? limit, Pagination pag)
+        private ResultSet<OpenActivity> GetOpens(string accessToken, string apiKey, string contactId, int? limit, DateTime? createdSince, Pagination pag)
         {
             ResultSet<OpenActivity> results = null;
-            string url = (pag == null) ? Config.ConstructUrl(Config.Endpoints.ContactTrackingOpens, new object[] { contactId }, new object[] { "limit", limit }) : pag.GetNextUrl();
+            string url = (pag == null) ? Config.ConstructUrl(Config.Endpoints.ContactTrackingOpens, new object[] { contactId }, new object[] { "limit", limit, "created_since", Extensions.ToISO8601String(createdSince) }) : pag.GetNextUrl();
             CUrlResponse response = RestClient.Get(url, accessToken, apiKey);
 
             if (response.IsError)
@@ -233,10 +308,11 @@ namespace CTCT.Services
         /// <param name="apiKey">The API key for the application</param>
         /// <param name="contactId">Contact id.</param>
         /// <param name="limit">Specifies the number of results per page in the output, from 1 - 500, default = 500.</param>
+        /// <param name="createdSince">filter for activities created since the supplied date in the collection</param>
         /// <returns>ResultSet containing a results array of @link SendActivity.</returns>
-        public ResultSet<SendActivity> GetSends(string accessToken, string apiKey, string contactId, int? limit)
+        public ResultSet<SendActivity> GetSends(string accessToken, string apiKey, string contactId, int? limit, DateTime? createdSince)
         {
-            return GetSends(accessToken, apiKey, contactId, limit, null);
+            return GetSends(accessToken, apiKey, contactId, limit, createdSince, null);
         }
 
         /// <summary>
@@ -244,11 +320,12 @@ namespace CTCT.Services
         /// </summary>
         /// <param name="accessToken">Constant Contact OAuth2 access token.</param>
         /// <param name="apiKey">The API key for the application</param>
+        /// <param name="createdSince">filter for activities created since the supplied date in the collection</param>
         /// <param name="pag">Pagination object.</param>
         /// <returns>ResultSet containing a results array of @link SendActivity.</returns>
-        public ResultSet<SendActivity> GetSends(string accessToken, string apiKey, Pagination pag)
+        public ResultSet<SendActivity> GetSends(string accessToken, string apiKey, DateTime? createdSince, Pagination pag)
         {
-            return GetSends(accessToken, apiKey, null, null, pag);
+            return GetSends(accessToken, apiKey, null, null, createdSince, pag);
         }
 
         /// <summary>
@@ -258,12 +335,13 @@ namespace CTCT.Services
         /// <param name="apiKey">The API key for the application</param>
         /// <param name="contactId">Contact id.</param>
         /// <param name="limit">Specifies the number of results per page in the output, from 1 - 500, default = 500.</param>
+        /// <param name="createdSince">filter for activities created since the supplied date in the collection</param>
         /// <param name="pag">Pagination object.</param>
         /// <returns>ResultSet containing a results array of @link SendActivity.</returns>
-        private ResultSet<SendActivity> GetSends(string accessToken, string apiKey, string contactId, int? limit, Pagination pag)
+        private ResultSet<SendActivity> GetSends(string accessToken, string apiKey, string contactId, int? limit, DateTime? createdSince, Pagination pag)
         {
             ResultSet<SendActivity> results = null;
-            string url = (pag == null) ? Config.ConstructUrl(Config.Endpoints.ContactTrackingSends, new object[] { contactId }, new object[] { "limit", limit }) : pag.GetNextUrl();
+            string url = (pag == null) ? Config.ConstructUrl(Config.Endpoints.ContactTrackingSends, new object[] { contactId }, new object[] { "limit", limit, "created_since", Extensions.ToISO8601String(createdSince) }) : pag.GetNextUrl();
             CUrlResponse response = RestClient.Get(url, accessToken, apiKey);
 
             if (response.IsError)
@@ -286,10 +364,11 @@ namespace CTCT.Services
         /// <param name="apiKey">The API key for the application</param>
         /// <param name="contactId">Contact id.</param>
         /// <param name="limit">Specifies the number of results per page in the output, from 1 - 500, default = 500.</param>
+        /// <param name="createdSince">filter for activities created since the supplied date in the collection</param>
         /// <returns>ResultSet containing a results array of @link OptOutActivity.</returns>
-        public ResultSet<OptOutActivity> GetOptOuts(string accessToken, string apiKey, string contactId, int? limit)
+        public ResultSet<OptOutActivity> GetOptOuts(string accessToken, string apiKey, string contactId, int? limit, DateTime? createdSince)
         {
-            return GetOptOuts(accessToken, apiKey, contactId, limit, null);
+            return GetOptOuts(accessToken, apiKey, contactId, limit, createdSince, null);
         }
 
         /// <summary>
@@ -297,11 +376,12 @@ namespace CTCT.Services
         /// </summary>
         /// <param name="accessToken">Constant Contact OAuth2 access token.</param>
         /// <param name="apiKey">The API key for the application</param>
+        /// <param name="createdSince">filter for activities created since the supplied date in the collection</param>
         /// <param name="pag">Pagination object.</param>
         /// <returns>ResultSet containing a results array of @link OptOutActivity.</returns>
-        public ResultSet<OptOutActivity> GetOptOuts(string accessToken, string apiKey, Pagination pag)
+        public ResultSet<OptOutActivity> GetOptOuts(string accessToken, string apiKey, DateTime? createdSince, Pagination pag)
         {
-            return GetOptOuts(accessToken, apiKey, null, null, pag);
+            return GetOptOuts(accessToken, apiKey, null, null, createdSince, pag);
         }
 
         /// <summary>
@@ -311,12 +391,13 @@ namespace CTCT.Services
         /// <param name="apiKey">The API key for the application</param>
         /// <param name="contactId">Contact id.</param>
         /// <param name="limit">Specifies the number of results per page in the output, from 1 - 500, default = 500.</param>
+        /// <param name="createdSince">filter for activities created since the supplied date in the collection</param>
         /// <param name="pag">Pagination object.</param>
         /// <returns>ResultSet containing a results array of @link OptOutActivity.</returns>
-        private ResultSet<OptOutActivity> GetOptOuts(string accessToken, string apiKey, string contactId, int? limit, Pagination pag)
+        private ResultSet<OptOutActivity> GetOptOuts(string accessToken, string apiKey, string contactId, int? limit, DateTime? createdSince, Pagination pag)
         {
             ResultSet<OptOutActivity> results = null;
-            string url = (pag == null) ? Config.ConstructUrl(Config.Endpoints.ContactTrackingUnsubscribes, new object[] { contactId }, new object[] { "limit", limit }) : pag.GetNextUrl();
+            string url = (pag == null) ? Config.ConstructUrl(Config.Endpoints.ContactTrackingUnsubscribes, new object[] { contactId }, new object[] { "limit", limit, "created_since", Extensions.ToISO8601String(createdSince) }) : pag.GetNextUrl();
             CUrlResponse response = RestClient.Get(url, accessToken, apiKey);
 
             if (response.IsError)
